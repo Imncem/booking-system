@@ -6,6 +6,7 @@ use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 // -------------------------
 // Redirect home to customer booking page
@@ -23,12 +24,21 @@ Route::get('/dashboard', function () {
 // -------------------------
 // Provider routes (for agents / consultants)
 // -------------------------
-Route::prefix('provider')->name('provider.')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [ProviderController::class, 'dashboard'])->name('dashboard');
-    Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability');
-    Route::post('/availability', [AvailabilityController::class, 'store'])->name('availability.store');
-    Route::get('/slots', [AvailabilityController::class, 'slots'])->name('slots');
-});
+Route::prefix('provider')
+    ->name('provider.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/dashboard', [ProviderController::class, 'dashboard'])->name('dashboard');
+
+        // Availability management
+        Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability');
+        Route::post('/availability', [AvailabilityController::class, 'store'])->name('availability.store');
+        Route::delete('/availability/{workingHour}', [AvailabilityController::class, 'destroy'])
+            ->name('availability.destroy');
+
+        // Time slots
+        Route::get('/slots', [AvailabilityController::class, 'slots'])->name('slots');
+    });
 
 // -------------------------
 // Customer booking routes
@@ -48,6 +58,14 @@ Route::middleware('auth')->group(function () {
 });
 
 // -------------------------
-// Auth routes (from Breeze)
+// Logout route (Breeze already provides this in auth.php)
 // -------------------------
-require __DIR__.'/auth.php';
+// But you can define explicitly if you want to ensure it exists
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
+// -------------------------
+// Auth routes (from Breeze scaffolding)
+// -------------------------
+require __DIR__ . '/auth.php';
